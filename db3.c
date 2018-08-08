@@ -5,26 +5,30 @@
 #include <libpq-fe.h>
 #include <string.h>
 
-void insert_propietarios(PGconn *conn, char nombre[55], char apellido[55], char email[55], char celular[55], char terminos[10]);
-void listar_propietarios(PGconn *conn);
-void select_propietarios(PGconn *conn, int propietario_id);
+void insert_propietarios();
+void listar_propietarios();
+void select_propietarios(char propietario_id[5]);
+void editar_propietario();
+void formulario_propietarios();
+
+// Variables propietario
+int opcion_propietarios;
+char id_propietario[5];
+char propietario_nombre[55];
+char propietario_apellido[55];
+char propietario_email[55];
+char propietario_celular[55];
+char propietario_terminos_txt;
+char terminos[10];
+PGconn *conn;
+PGresult *res;
 
 int main() {
-  PGconn *conn;
-  PGresult *res;
+  int hole; // la trinchera de los stops
   int i, j, n, opcion, input_character;
 
-  // Variables propietario
-  int opcion_propietarios;
-  int id_propietario;
-  char nombre[55];
-  char apellido[55];
-  char email[55];
-  char celular[55];
-  char terminos_txt;
-  char terminos[10];
 
-  conn = PQsetdbLogin("localhost","5433",NULL,NULL,"automan_development","postgres","");
+  conn = PQsetdbLogin("ec2-54-243-235-153.compute-1.amazonaws.com","5432",NULL,NULL,"da5o8diaj47q2f","lgiihovsucecaa","200179f5506cfb252aa3acce06de0a24e290dd259d00db06703913b84e607a22");
 
   if (PQstatus(conn) == CONNECTION_BAD) {
     printf("\nError general en la conexión");
@@ -65,28 +69,22 @@ int main() {
           case 1:
             printf( "PROBAR PROPIETARIOS -> Registrar propietarios" );
             printf( "\n   Validar datos de propietarios, campos con * son requeridos, ingrese el mismo email en mas de un usuario y espere la validacion" );
-            printf( "\n   Nombre*: "); std::cin >> nombre;
-            printf( "   Apellido*: "); std::cin >> apellido;
-            printf( "   Email*: "); std::cin >> email;
-            printf( "   Celular*: "); std::cin >> celular;
-            printf( "   Acepta los terminos se uso y privacidad? [Y/n]: "); std::cin >> terminos_txt;
-            if ( terminos_txt == 'Y' || terminos_txt == 'y' ) {
-              strcpy(terminos, "TRUE");
-            } else {
-              strcpy(terminos, "FALSE");
-            }
+            formulario_propietarios();
 
-            insert_propietarios(conn, nombre, apellido, email, celular, terminos);
+            insert_propietarios();
             
-            std::cout << "Presione 1 para continuar. "; std::cin>>terminos_txt;
+            std::cout << "Presione 1 para continuar. "; std::cin>>hole;
           break;
           case 2:
             printf( "PROBAR PROPIETARIOS -> Editar propietarios" );
             printf( "\n   Seleccione un propietario y edite su informacion " );
-            listar_propietarios(conn);
+            listar_propietarios();
             std::cout << "   Ingrese el id del propietario: "; std::cin>>id_propietario;
-            select_propietarios(conn, id_propietario);
             system("clear");
+            select_propietarios(id_propietario);
+            formulario_propietarios();
+            
+
           break;
           case 3:
           break;
@@ -116,10 +114,10 @@ int main() {
       case 4:
         if (PQstatus(conn) != CONNECTION_BAD){
           int id;
-          char nombre[20];
-          char apellido[20];
-          char sql_query[200]; // Variable para almacenar el insert string concatenado
-          printf("%s\n", "Insertar datos en la tabla ususerio");
+          // char nombre[20];
+          // char apellido[20];
+          // char sql_query[200]; // Variable para almacenar el insert string concatenado
+          // printf("%s\n", "Insertar datos en la tabla ususerio");
           // printf("%s", "Id: "); scanf("%d", &id);
           // printf("%s", "nombre: "); scanf("%s", &nombre);
           // printf("%s", "apellido: "); scanf("%s", &apellido);
@@ -136,19 +134,19 @@ int main() {
   return 0;
 }
 
-void insert_propietarios(PGconn *conn, char nombre[55], char apellido[55], char email[55], char celular[55], char terminos[10]) {
+void insert_propietarios() {
   char sql_query[255];
   PGresult *res_p;
   strcpy (sql_query, "INSERT INTO owners (agreement_terms, cel_phone, email, last_name, name, created_at, updated_at) VALUES (");
   strcat (sql_query, terminos);
   strcat (sql_query, ", '");
-  strcat (sql_query, celular);
+  strcat (sql_query, propietario_celular);
   strcat (sql_query, "', '");
-  strcat (sql_query, email);
+  strcat (sql_query, propietario_email);
   strcat (sql_query, "', '");
-  strcat (sql_query, apellido);
+  strcat (sql_query, propietario_apellido);
   strcat (sql_query, "', '");
-  strcat (sql_query, nombre);
+  strcat (sql_query, propietario_nombre);
   strcat (sql_query, "', now(), now());");
   if (PQstatus(conn) != CONNECTION_BAD){
     res_p = PQexec(conn, sql_query);
@@ -156,19 +154,10 @@ void insert_propietarios(PGconn *conn, char nombre[55], char apellido[55], char 
     if (PQresultStatus(res_p) != PGRES_COMMAND_OK) {
       std::cout << "Insersion fallida" << PQerrorMessage(conn);
     }
-//    if (res != NULL && PGRES_TUPLES_OK == PQresultStatus(res)){
-//      for (i = PQntuples(res)-1; i >= 0; i--){
-//        for (j = PQnfields(res)-1; j >= 0; j--)
-//          printf("%s\t",PQgetvalue(res,i,j));
-//        printf("\n");
-//      }
-//      PQclear(res);
-//    }
-//    printf("\n========================================\n");
   }
 }
 
-void listar_propietarios(PGconn *conn) {
+void listar_propietarios() {
   int i, j;
   char sql_query[255];
   PGresult *res_p;
@@ -188,13 +177,12 @@ void listar_propietarios(PGconn *conn) {
   }
 }
 
-void select_propietarios(PGconn *conn, int propietario_id) {
+void select_propietarios(char propietario_id[5]) {
   int i, j;
-  char *id = propietario_id;
   char sql_query[255];
   PGresult *res_p;
   strcpy(sql_query, "SELECT agreement_terms, cel_phone, email, last_name, name, id from owners where id =");
-  strcat(sql_query, id);
+  strcat(sql_query, propietario_id);
   strcat(sql_query, ";");
   printf("ID\tNombre\tApellido\tEmail\tCelular\tTerminos\n");
   if (PQstatus(conn) != CONNECTION_BAD){
@@ -207,6 +195,19 @@ void select_propietarios(PGconn *conn, int propietario_id) {
       }
       PQclear(res_p);
     }
+  }
+}
+
+void formulario_propietarios() {
+  printf( "\n   Nombre*: "); std::cin >> propietario_nombre;
+  printf( "   Apellido*: "); std::cin >> propietario_apellido;
+  printf( "   Email*: "); std::cin >> propietario_email;
+  printf( "   Celular*: "); std::cin >> propietario_celular;
+  printf( "   Acepta los terminos se uso y privacidad? [Y/n]: "); std::cin >> propietario_terminos_txt;
+  if ( propietario_terminos_txt == 'Y' || propietario_terminos_txt == 'y' ) {
+    strcpy(terminos, "TRUE");
+  } else {
+    strcpy(terminos, "FALSE");
   }
 }
 
