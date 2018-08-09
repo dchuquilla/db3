@@ -4,22 +4,26 @@
 #include <math.h>
 #include <libpq-fe.h>
 #include <string.h>
+#include <sstream>
+
+using namespace std;
 
 void insert_propietarios();
+void update_propietarios(string propietario_id);
 void listar_propietarios();
-void select_propietarios(char propietario_id[5]);
+void select_propietarios(string propietario_id);
 void editar_propietario();
 void formulario_propietarios();
 
 // Variables propietario
 int opcion_propietarios;
-char id_propietario[5];
-char propietario_nombre[55];
-char propietario_apellido[55];
-char propietario_email[55];
-char propietario_celular[55];
-char propietario_terminos_txt;
-char terminos[10];
+string id_propietario;
+string propietario_nombre;
+string propietario_apellido;
+string propietario_email;
+string propietario_celular;
+string propietario_terminos_txt;
+string propietario_terminos;
 PGconn *conn;
 PGresult *res;
 
@@ -53,41 +57,51 @@ int main() {
     system("clear");
     switch ( opcion ){
       case 1:
-        printf( "PROBAR PROPIETARIOS" );
-        printf( "\n   1. Registrar propietarios (Validar datos)." );
-        printf( "\n   2. Editar propietarios (Validar datos)." );
-        printf( "\n   3. Eliminar propietarios (Relacion con autos)." );
-        printf( "\n   0. Regresar." );
+              printf( "PROBAR PROPIETARIOS" );
+              printf( "\n   1. Registrar propietarios (Validar datos)." );
+              printf( "\n   2. Editar propietarios (Validar datos)." );
+              printf( "\n   3. Eliminar propietarios (Relacion con autos)." );
+              printf( "\n   0. Regresar." );
 
-        do{
-          printf( "\n   Introduzca opción (1-3): ");
-          scanf( "%d", &opcion_propietarios );
-        } while ( opcion_propietarios  < 0 && (opcion_propietarios < 1 || opcion_propietarios > 3) );
+              do{
+                printf( "\n   Introduzca opción (1-3): ");
+                scanf( "%d", &opcion_propietarios );
+              } while ( opcion_propietarios  < 0 && (opcion_propietarios < 1 || opcion_propietarios > 3) );
 
-        system("clear");
-        switch (opcion_propietarios) {
-          case 1:
-            printf( "PROBAR PROPIETARIOS -> Registrar propietarios" );
-            printf( "\n   Validar datos de propietarios, campos con * son requeridos, ingrese el mismo email en mas de un usuario y espere la validacion" );
-            formulario_propietarios();
+              system("clear");
+              switch (opcion_propietarios) {
+                case 1:
+                  propietario_terminos = "";
+                  propietario_celular = "";
+                  propietario_email = "";
+                  propietario_apellido = "";
+                  propietario_nombre = "";
+                  printf( "PROBAR PROPIETARIOS -> Registrar propietarios" );
+                  printf( "\n   Validar datos de propietarios, campos con * son requeridos, ingrese el mismo email en mas de un usuario y espere la validacion" );
+                  
+                  formulario_propietarios();
 
-            insert_propietarios();
-            
-            std::cout << "Presione 1 para continuar. "; std::cin>>hole;
-          break;
-          case 2:
-            printf( "PROBAR PROPIETARIOS -> Editar propietarios" );
-            printf( "\n   Seleccione un propietario y edite su informacion " );
-            listar_propietarios();
-            std::cout << "   Ingrese el id del propietario: "; std::cin>>id_propietario;
-            system("clear");
-            select_propietarios(id_propietario);
-            formulario_propietarios();
-            
+                  insert_propietarios();
+                  
+                  cout << "Presione 1 para continuar. "; cin>>hole;
+                break;
+                case 2:
+                  printf( "PROBAR PROPIETARIOS -> Editar propietarios" );
+                  printf( "\n   Seleccione un propietario y edite su informacion " );
+                  listar_propietarios();
+                  cout << "   Ingrese el id del propietario: "; cin>>id_propietario;
+                  system("clear");
+                  
+                  select_propietarios(id_propietario);
+                  
+                  formulario_propietarios();
 
-          break;
-          case 3:
-          break;
+                  update_propietarios(id_propietario);
+                  
+
+                break;
+                case 3:
+                break;
         }
       break;
 
@@ -135,24 +149,43 @@ int main() {
 }
 
 void insert_propietarios() {
-  char sql_query[255];
   PGresult *res_p;
-  strcpy (sql_query, "INSERT INTO owners (agreement_terms, cel_phone, email, last_name, name, created_at, updated_at) VALUES (");
-  strcat (sql_query, terminos);
-  strcat (sql_query, ", '");
-  strcat (sql_query, propietario_celular);
-  strcat (sql_query, "', '");
-  strcat (sql_query, propietario_email);
-  strcat (sql_query, "', '");
-  strcat (sql_query, propietario_apellido);
-  strcat (sql_query, "', '");
-  strcat (sql_query, propietario_nombre);
-  strcat (sql_query, "', now(), now());");
+  string sql_query ("INSERT INTO owners (agreement_terms, cel_phone, email, last_name, name, created_at, updated_at) VALUES (");
+  sql_query = sql_query + propietario_terminos;
+  sql_query = sql_query + ", '";
+  sql_query = sql_query + propietario_celular;
+  sql_query = sql_query + "', '";
+  sql_query = sql_query + propietario_email;
+  sql_query = sql_query + "', '";
+  sql_query = sql_query + propietario_apellido;
+  sql_query = sql_query + "', '";
+  sql_query = sql_query + propietario_nombre;
+  sql_query = sql_query + "', now(), now());";
+  const char *c = sql_query.c_str();
   if (PQstatus(conn) != CONNECTION_BAD){
-    res_p = PQexec(conn, sql_query);
+    res_p = PQexec(conn, c);
     printf("\n========================================\n");
     if (PQresultStatus(res_p) != PGRES_COMMAND_OK) {
-      std::cout << "Insersion fallida" << PQerrorMessage(conn);
+      cout << "Insersion fallida" << PQerrorMessage(conn);
+    }
+  }
+}
+
+void update_propietarios(string propietario_id) {
+  PGresult *res_p;
+  string sql_query ("UPDATE owners ");
+  sql_query = sql_query + "SET agreement_terms = "+ propietario_terminos + ", ";
+  sql_query = sql_query + "SET cel_phone = '" + propietario_celular + "', ";
+  sql_query = sql_query + "SET email = '" + propietario_email + "', ";
+  sql_query = sql_query + "SET last_name = '" + propietario_apellido + "', ";
+  sql_query = sql_query + "SET name = '" + propietario_nombre + "', ";
+  sql_query = sql_query + "SET updated_at = now()) WHERE id = " + propietario_id + ";";
+  const char *c = sql_query.c_str();
+  if (PQstatus(conn) != CONNECTION_BAD){
+    res_p = PQexec(conn, c);
+    printf("\n========================================\n");
+    if (PQresultStatus(res_p) != PGRES_COMMAND_OK) {
+      cout << "Actualizacion fallida" << PQerrorMessage(conn);
     }
   }
 }
@@ -177,20 +210,26 @@ void listar_propietarios() {
   }
 }
 
-void select_propietarios(char propietario_id[5]) {
+void select_propietarios(string propietario_id) {
   int i, j;
-  char sql_query[255];
   PGresult *res_p;
-  strcpy(sql_query, "SELECT agreement_terms, cel_phone, email, last_name, name, id from owners where id =");
-  strcat(sql_query, propietario_id);
-  strcat(sql_query, ";");
+  string sql_query ("SELECT agreement_terms, cel_phone, email, last_name, name, id from owners where id =");
+  sql_query = sql_query + propietario_id;
+  sql_query = sql_query + ";";
+  const char *c = sql_query.c_str();
   printf("ID\tNombre\tApellido\tEmail\tCelular\tTerminos\n");
   if (PQstatus(conn) != CONNECTION_BAD){
-    res_p = PQexec(conn, sql_query);
+    res_p = PQexec(conn, c);
     if (res_p != NULL && PGRES_TUPLES_OK == PQresultStatus(res_p)){
       for (i = PQntuples(res_p)-1; i >= 0; i--){
-        for (j = PQnfields(res_p)-1; j >= 0; j--)
+        propietario_terminos = PQgetvalue(res_p,i,1);
+        propietario_celular = PQgetvalue(res_p,i,2);
+        propietario_email = PQgetvalue(res_p,i,3);
+        propietario_apellido = PQgetvalue(res_p,i,4);
+        propietario_nombre = PQgetvalue(res_p,i,5);
+        for (j = PQnfields(res_p)-1; j >= 0; j--) {
           printf("%s\t",PQgetvalue(res_p,i,j));
+        }
         printf("\n");
       }
       PQclear(res_p);
@@ -199,15 +238,38 @@ void select_propietarios(char propietario_id[5]) {
 }
 
 void formulario_propietarios() {
-  printf( "\n   Nombre*: "); std::cin >> propietario_nombre;
-  printf( "   Apellido*: "); std::cin >> propietario_apellido;
-  printf( "   Email*: "); std::cin >> propietario_email;
-  printf( "   Celular*: "); std::cin >> propietario_celular;
-  printf( "   Acepta los terminos se uso y privacidad? [Y/n]: "); std::cin >> propietario_terminos_txt;
-  if ( propietario_terminos_txt == 'Y' || propietario_terminos_txt == 'y' ) {
-    strcpy(terminos, "TRUE");
+  string input;
+  propietario_terminos_txt = 'y';
+  cout << "\n";
+  cout << "   Nombre*: ";
+  cin>>input;
+  if ( input.length()>0 ) {
+    propietario_nombre = input;
+  }
+  cout << "   Apellido*: ";
+  cin>>input;
+  if ( input.length()>0 ) {
+    propietario_apellido = input;
+  }
+  cout << "   Email*: ";
+  cin>>input;
+  if ( input.length()>0 ) {
+    propietario_email = input;
+  }
+  cout << "   Celular*: ";
+  cin>>input;
+  if ( input.length()>0 ) {
+    propietario_celular = input;
+  }
+  cout << "   Acepta los terminos se uso y privacidad? [Y/n]: ";
+  cin>>input;
+  if ( input.length()>0 ) {
+    propietario_terminos_txt = input;
+  }
+  if ( propietario_terminos_txt.compare("Y") == 0 || propietario_terminos_txt.compare("y")  == 0 ) {
+    propietario_terminos = "TRUE";
   } else {
-    strcpy(terminos, "FALSE");
+    propietario_terminos = "FALSE";
   }
 }
 
