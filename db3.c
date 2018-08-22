@@ -1186,8 +1186,7 @@ int main() {
     string input;
     cout << "\n";
 
-    if (nuevo == true)
-    {
+    if (nuevo == true) {
       listar_autos();
       cout << "   Auto [ID]*: ";
       getline(cin, input);
@@ -1364,9 +1363,9 @@ int main() {
     cout << "\n     Tipos de mantenimiento";
     cout << "\n     [1] Cambio de bandas";
     cout << "\n     [2] Cambio de aceite y filtros";
-    cout << "\n     [3] Inspeccion de líquidos";
+    cout << "\n     [3] Inspección de líquidos";
     cout << "\n     [4] Alineación y balanceo";
-    cout << "\n     [5] Inspeccion de frenos";
+    cout << "\n     [5] Inspección de frenos";
     cout << "\n\n";
   }
 
@@ -1381,13 +1380,13 @@ int main() {
         return "Cambio de aceite y filtros";
       break;
       case 3:
-        return "Inspeccion de líquidos";
+        return "Inspección de líquidos";
       break;
       case 4:
         return "Alineación y balanceo";
       break;
       case 5:
-        return "Inspeccion de frenos";
+        return "Inspección de frenos";
       break;
     }
   } 
